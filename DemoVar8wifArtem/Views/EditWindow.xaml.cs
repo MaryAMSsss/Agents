@@ -1,0 +1,95 @@
+﻿using DemoVar8wifArtem.DataB;
+using DemoVar8wifArtem.Models;
+using Microsoft.Win32;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+using Path = System.IO.Path;
+
+namespace DemoVar8wifArtem.Views
+{
+    /// <summary>
+    /// Логика взаимодействия для EditWindow.xaml
+    /// </summary>
+    public partial class EditWindow : Window
+    {
+        string fullPath = string.Empty;
+        ContentWindow _contentWindow;
+        public List<AgentType> AgentTypes = AgentTypeDB.GetAgentType();
+        public EditWindow(Agent agent, ContentWindow contentWindow)
+        {
+            InitializeComponent();
+            _contentWindow = contentWindow;
+            LoadDataToControls(agent);
+            oldAgent = agent;
+            AgentsTypeCb.ItemsSource = AgentTypes;
+        }
+        Agent oldAgent;
+        private void LoadDataToControls(Agent agent)
+        {
+            AgentNameTbx.Text = agent.AgentName;
+            AgentsTypeCb.SelectedItem = AgentTypes.FirstOrDefault(i => i.Id == agent.AgentTypeId);
+            AgentEmailTbx.Text = agent.Email;
+            AgentPhoneTbx.Text = agent.Phone;
+            AgentAddressTbx.Text = agent.Address;
+            AgentPriorityTbx.Text = agent.Priority.ToString();
+            AgentDirectorTbx.Text = agent.DirectorName;
+            AgentINNTbx.Text = agent.Inn;
+            AgentKPPTbx.Text = agent.Kpp;
+            ImageAgent.Source = new BitmapImage(new System.Uri(agent.FullPath));
+        }
+        private void EditBtn_Click(object sender, RoutedEventArgs e)
+        {
+            // Не забудь добавить проверки на null!!
+            string editedName = AgentNameTbx.Text;
+            AgentType selectedAgentType = AgentsTypeCb.SelectedItem as AgentType;
+            if (selectedAgentType == null)
+            {
+                MessageBox.Show("Введите тип агента!");
+                return;
+            }
+            string email = AgentEmailTbx.Text;
+            string phone = AgentPhoneTbx.Text;
+            string address = AgentAddressTbx.Text;
+            int priority = Convert.ToInt32(AgentPriorityTbx.Text);
+            string director = AgentDirectorTbx.Text;
+            string inn = AgentINNTbx.Text;
+            string kpp = AgentKPPTbx.Text;
+            oldAgent.AgentName = editedName;
+            oldAgent.Email = email;
+            oldAgent.Kpp = kpp;
+            oldAgent.Inn = inn;
+            oldAgent.Phone = phone;
+            oldAgent.Address = address;
+            oldAgent.DirectorName = director;
+            oldAgent.AgentType = selectedAgentType;
+            oldAgent.Priority = priority;
+            oldAgent.Logo = fullPath;
+            AgentsDB.UpdateAgent(oldAgent);
+            // Обновили базу данных и страницы в десктопе
+            _contentWindow.UpdateData();
+            _contentWindow.UpdatePages();
+            this.Close();
+        }
+        private void AddImageButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            if (openFileDialog.ShowDialog() == true)
+            {
+                fullPath = openFileDialog.FileName;
+                ImageAgent.Source = new BitmapImage(new System.Uri(fullPath));
+                fullPath = @"\agents\" + Path.GetFileName(fullPath);
+            }
+        }
+    }
+}
